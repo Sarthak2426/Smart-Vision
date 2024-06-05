@@ -26,11 +26,12 @@ jobs:
         run: |
           python -m venv venv
           source venv/bin/activate
-
+      
       - name: Install dependencies
         run: pip install -r requirements.txt
-
+        
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
+
       - name: Zip artifact for deployment
         run: zip release.zip ./* -r
 
@@ -48,6 +49,8 @@ jobs:
     environment:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+    permissions:
+      id-token: write #This is required for requesting the JWT
 
     steps:
       - name: Download artifact from build job
@@ -58,10 +61,18 @@ jobs:
       - name: Unzip artifact for deployment
         run: unzip release.zip
 
+      
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_B47C27BA7640467387D0B279F879922B }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_875BBCB10A454B608F5ADEA87259C190 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_EDDDD6679748403CB5AC5A4021EB63A8 }}
+
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v2
         id: deploy-to-webapp
         with:
           app-name: 'smartvisioncamera'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_61B920829C3B4621A26B4973ED0109CB }}
+          
